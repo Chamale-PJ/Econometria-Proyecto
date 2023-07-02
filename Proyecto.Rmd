@@ -1,0 +1,111 @@
+---
+title: "PROYECTO FINAL ECONOMETRIA EN R"
+output: html_notebook
+---
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(caret)
+library(corrplot)
+library(PerformanceAnalytics)
+```
+
+```{r}
+dataset <- read.csv('train.csv')
+
+dim(dataset)
+
+#dataset %>%
+#  select(-c('ocean_proximity'))
+
+#Convirtiendo valor categorico a factor
+dataset$ocean_proximity <- factor(dataset$ocean_proximity , labels = c("ISLAND","INLAND","<1H OCEAN","NEAR BAY", "NEAR OCEAN"))
+
+str(dataset$ocean_proximity)
+
+#Convirtiendo factor a valor numerico
+dataset$ocean_proximity <- as.numeric(dataset$ocean_proximity)
+
+dataset
+```
+```{r}
+#Verificando valores NA
+dataset[is.na(dataset)]
+#remplazando valores NA por valores 0
+dataset[is.na(dataset)] <- mean(dataset$total_bedrooms, na.rm = TRUE)
+dataset[is.na(dataset)]
+```
+```{r}
+cor(dataset)
+```
+
+```{r}
+chart.Correlation(dataset, histogram = TRUE, cex=1)
+```
+
+
+```{r}
+glimpse(dataset)
+```
+
+```{r}
+k <- 10
+kfolds_driver <- trainControl(method = "cv", number = k , repeats = 10, verboseIter = T)
+
+#model1 <- dataset %>%
+#  lm(formula= median_house_value ~ .)
+
+lm1 <- train(form= median_house_value ~ . ,
+             data= dataset,
+             trControl = kfolds_driver,
+             method = 'lm')
+
+lm1$results$RMSE
+
+
+#model1
+
+#summary(model1)
+```
+```{r}
+datatest <- read.csv('test.csv')
+
+#datatest %>%
+#  select(-c('id', 'ocean_proximity'))
+#Convirtiendo valor categorico a factor
+datatest$ocean_proximity <- factor(datatest$ocean_proximity , labels = c("ISLAND","INLAND","<1H OCEAN","NEAR BAY", "NEAR OCEAN"))
+
+str(datatest$ocean_proximity)
+
+#Convirtiendo factor a valor numerico
+datatest$ocean_proximity <- as.numeric(datatest$ocean_proximity)
+
+datatest
+
+
+
+```
+```{r}
+#Verificando valores NA
+datatest[is.na(datatest)]
+
+#remplazando valores NA por valores 0
+datatest[is.na(datatest)] <- mean(datatest$total_bedrooms, na.rm = TRUE)
+
+datatest[is.na(datatest)]
+```
+
+
+```{r}
+#predicción (inferencia)
+
+
+result <- data.frame(predict(object = lm1,
+        newdata = data.frame(datatest)))
+
+# Coma como separador y punto como separador decimal
+write.table(result, "result.txt")
+```
+
+
